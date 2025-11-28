@@ -496,8 +496,8 @@ const App: React.FC = () => {
 
       </div>
 
-      {/* API Key Input Modal */}
-      {showApiKeyInput && (
+      {/* API Key Input Modal - Only show if really needed */}
+      {showApiKeyInput && !apiKey && typeof window !== 'undefined' && !localStorage.getItem('GEMINI_API_KEY') && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
             <h3 className="text-lg font-bold text-slate-800 mb-2">API Key Required</h3>
