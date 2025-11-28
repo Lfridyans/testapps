@@ -3,6 +3,9 @@ import { getAirportData, getAirportStats, getAirportName } from '../data/nataruD
 import { PredictionRequest, PredictionResult, TrafficType, ExecutiveData } from '../types';
 import { PDF_STYLE_REFERENCE } from '../data/executiveData';
 
+// Default API key (fallback if not set via env or localStorage)
+const DEFAULT_API_KEY = 'AIzaSyCPMXA5VvqQOTNXKhWeQdOc9xynA1h2K1g';
+
 // Helper to get API key from various sources
 const getApiKey = (): string | null => {
   // 1. Check localStorage (user input - highest priority for security)
@@ -11,12 +14,24 @@ const getApiKey = (): string | null => {
   }
   // 2. Check process.env (build time - from GitHub Secrets)
   if (process.env.API_KEY && process.env.API_KEY !== '') {
+    // Auto-save to localStorage for future use
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('GEMINI_API_KEY', process.env.API_KEY);
+    }
     return process.env.API_KEY;
   }
   if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== '') {
+    // Auto-save to localStorage for future use
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('GEMINI_API_KEY', process.env.GEMINI_API_KEY);
+    }
     return process.env.GEMINI_API_KEY;
   }
-  return null;
+  // 3. Use default API key and auto-save to localStorage
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('GEMINI_API_KEY', DEFAULT_API_KEY);
+  }
+  return DEFAULT_API_KEY;
 };
 
 export const getPrediction = async (request: PredictionRequest): Promise<PredictionResult> => {

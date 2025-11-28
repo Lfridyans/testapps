@@ -60,14 +60,28 @@ const App: React.FC = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
 
-  // API Key State
+  // API Key State - Auto-initialize from localStorage or set default
   const [apiKey, setApiKey] = useState<string>(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('GEMINI_API_KEY') || '';
+      const stored = localStorage.getItem('GEMINI_API_KEY');
+      if (stored) {
+        return stored;
+      }
+      // Auto-set default API key if not found
+      const defaultKey = 'AIzaSyCPMXA5VvqQOTNXKhWeQdOc9xynA1h2K1g';
+      localStorage.setItem('GEMINI_API_KEY', defaultKey);
+      return defaultKey;
     }
     return '';
   });
   const [showApiKeyInput, setShowApiKeyInput] = useState<boolean>(false);
+
+  // Auto-hide modal if API key is already set
+  useEffect(() => {
+    if (apiKey && typeof window !== 'undefined' && localStorage.getItem('GEMINI_API_KEY')) {
+      setShowApiKeyInput(false);
+    }
+  }, [apiKey]);
 
   // Dynamic Data Handling for Predictor
   const currentData = useMemo(() => getAirportData(selectedAirport), [selectedAirport]);
@@ -104,10 +118,11 @@ const App: React.FC = () => {
   const handlePredict = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check if API key is needed
-    if (!apiKey && typeof window !== 'undefined' && !localStorage.getItem('GEMINI_API_KEY')) {
-      setShowApiKeyInput(true);
-      return;
+    // API key should already be set via auto-initialization, but double-check
+    if (typeof window !== 'undefined' && !localStorage.getItem('GEMINI_API_KEY')) {
+      const defaultKey = 'AIzaSyCPMXA5VvqQOTNXKhWeQdOc9xynA1h2K1g';
+      localStorage.setItem('GEMINI_API_KEY', defaultKey);
+      setApiKey(defaultKey);
     }
     
     setLoading(true);
@@ -181,10 +196,11 @@ const App: React.FC = () => {
   };
 
   const handleGenExecReport = async () => {
-    // Check if API key is needed
-    if (!apiKey && typeof window !== 'undefined' && !localStorage.getItem('GEMINI_API_KEY')) {
-      setShowApiKeyInput(true);
-      return;
+    // API key should already be set via auto-initialization, but double-check
+    if (typeof window !== 'undefined' && !localStorage.getItem('GEMINI_API_KEY')) {
+      const defaultKey = 'AIzaSyCPMXA5VvqQOTNXKhWeQdOc9xynA1h2K1g';
+      localStorage.setItem('GEMINI_API_KEY', defaultKey);
+      setApiKey(defaultKey);
     }
 
     // 1. Capture user interaction immediately to unlock AudioContext
