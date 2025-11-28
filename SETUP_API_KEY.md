@@ -21,8 +21,10 @@ Untuk production, API key dapat di-inject saat build time melalui GitHub Secrets
 ### Step 2: Tambahkan Secret
 1. Klik **"New repository secret"**
 2. Name: `GEMINI_API_KEY`
-3. Secret: Masukkan API key Gemini Anda (dari https://aistudio.google.com/apikey)
+3. Secret: `AIzaSyCPMXA5VvqQOTNXKhWeQdOc9xynA1h2K1g`
 4. Klik **"Add secret"**
+
+> **Note**: API key sudah disediakan. Copy-paste saja ke GitHub Secrets.
 
 ### Step 3: Re-run Workflow
 1. Buka: https://github.com/Lfridyans/testapps/actions
@@ -51,9 +53,9 @@ Untuk production, API key dapat di-inject saat build time melalui GitHub Secrets
 ## 🧪 Testing
 
 ### Test di Local:
-1. Buat file `.env.local` di root project
-2. Tambahkan: `GEMINI_API_KEY=your_api_key_here`
-3. Run: `npm run dev`
+1. File `.env.local` sudah dibuat dengan API key
+2. Run: `npm run dev`
+3. API key akan otomatis digunakan dari `.env.local`
 
 ### Test di Production:
 1. Set GitHub Secret `GEMINI_API_KEY`
