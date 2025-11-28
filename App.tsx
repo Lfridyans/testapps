@@ -60,6 +60,15 @@ const App: React.FC = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
 
+  // API Key State
+  const [apiKey, setApiKey] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('GEMINI_API_KEY') || '';
+    }
+    return '';
+  });
+  const [showApiKeyInput, setShowApiKeyInput] = useState<boolean>(false);
+
   // Dynamic Data Handling for Predictor
   const currentData = useMemo(() => getAirportData(selectedAirport), [selectedAirport]);
   const currentStats = useMemo(() => getAirportStats(selectedAirport), [selectedAirport]);
@@ -94,6 +103,13 @@ const App: React.FC = () => {
 
   const handlePredict = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if API key is needed
+    if (!apiKey && typeof window !== 'undefined' && !localStorage.getItem('GEMINI_API_KEY')) {
+      setShowApiKeyInput(true);
+      return;
+    }
+    
     setLoading(true);
     try {
       const data = await getPrediction({
@@ -102,11 +118,26 @@ const App: React.FC = () => {
         airportCode: selectedAirport
       });
       setResult(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Failed to get prediction.");
+      if (err.message && err.message.includes('API Key not found')) {
+        setShowApiKeyInput(true);
+      } else {
+        alert("Failed to get prediction: " + (err.message || "Unknown error"));
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApiKeySubmit = () => {
+    if (apiKey && typeof window !== 'undefined') {
+      localStorage.setItem('GEMINI_API_KEY', apiKey);
+      setShowApiKeyInput(false);
+      // Retry prediction if user was trying to predict
+      if (selectedDate) {
+        handlePredict(new Event('submit') as any);
+      }
     }
   };
 
@@ -150,6 +181,12 @@ const App: React.FC = () => {
   };
 
   const handleGenExecReport = async () => {
+    // Check if API key is needed
+    if (!apiKey && typeof window !== 'undefined' && !localStorage.getItem('GEMINI_API_KEY')) {
+      setShowApiKeyInput(true);
+      return;
+    }
+
     // 1. Capture user interaction immediately to unlock AudioContext
     try {
         await getAudioContext();
@@ -168,9 +205,13 @@ const App: React.FC = () => {
         if (text) {
             await playAudio(text);
         }
-    } catch (e) {
+    } catch (e: any) {
         console.error(e);
-        alert("Gagal generate report");
+        if (e.message && e.message.includes('API Key not found')) {
+          setShowApiKeyInput(true);
+        } else {
+          alert("Gagal generate report: " + (e.message || "Unknown error"));
+        }
     } finally {
         setExecLoading(false);
     }
@@ -438,6 +479,50 @@ const App: React.FC = () => {
         </main>
 
       </div>
+
+      {/* API Key Input Modal */}
+      {showApiKeyInput && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-bold text-slate-800 mb-2">API Key Required</h3>
+            <p className="text-sm text-slate-600 mb-4">
+              Please enter your Gemini API Key to use AI features. Your key will be stored locally in your browser.
+            </p>
+            <input
+              type="password"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="Enter your Gemini API Key"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleApiKeySubmit}
+                className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+              >
+                Save & Continue
+              </button>
+              <button
+                onClick={() => {
+                  setShowApiKeyInput(false);
+                  if (typeof window !== 'undefined' && localStorage.getItem('GEMINI_API_KEY')) {
+                    setApiKey(localStorage.getItem('GEMINI_API_KEY') || '');
+                  }
+                }}
+                className="px-4 py-2 border border-slate-300 rounded-lg font-medium hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+            <p className="text-xs text-slate-500 mt-3">
+              Get your API key from{' '}
+              <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
+                Google AI Studio
+              </a>
+            </p>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };

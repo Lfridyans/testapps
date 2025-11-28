@@ -3,10 +3,26 @@ import { getAirportData, getAirportStats, getAirportName } from '../data/nataruD
 import { PredictionRequest, PredictionResult, TrafficType, ExecutiveData } from '../types';
 import { PDF_STYLE_REFERENCE } from '../data/executiveData';
 
+// Helper to get API key from various sources
+const getApiKey = (): string | null => {
+  // 1. Check localStorage (user input - highest priority for security)
+  if (typeof window !== 'undefined' && localStorage.getItem('GEMINI_API_KEY')) {
+    return localStorage.getItem('GEMINI_API_KEY');
+  }
+  // 2. Check process.env (build time - from GitHub Secrets)
+  if (process.env.API_KEY && process.env.API_KEY !== '') {
+    return process.env.API_KEY;
+  }
+  if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== '') {
+    return process.env.GEMINI_API_KEY;
+  }
+  return null;
+};
+
 export const getPrediction = async (request: PredictionRequest): Promise<PredictionResult> => {
-  const apiKey = process.env.API_KEY;
+  const apiKey = getApiKey();
   if (!apiKey) {
-    throw new Error("API Key not found");
+    throw new Error("API Key not found. Please set GEMINI_API_KEY in GitHub Secrets or enter it in the app.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -115,8 +131,8 @@ export const getPrediction = async (request: PredictionRequest): Promise<Predict
 };
 
 export const getExecutiveAnalysis = async (data: ExecutiveData): Promise<string> => {
-    const apiKey = process.env.API_KEY;
-    if (!apiKey) throw new Error("API Key not found");
+    const apiKey = getApiKey();
+    if (!apiKey) throw new Error("API Key not found. Please set GEMINI_API_KEY in GitHub Secrets or enter it in the app.");
     const ai = new GoogleGenAI({ apiKey });
 
     const systemInstruction = `
@@ -178,8 +194,8 @@ export const getExecutiveAnalysis = async (data: ExecutiveData): Promise<string>
 }
 
 export const generateExecutiveAudio = async (htmlContent: string): Promise<string | undefined> => {
-    const apiKey = process.env.API_KEY;
-    if (!apiKey) throw new Error("API Key not found");
+    const apiKey = getApiKey();
+    if (!apiKey) throw new Error("API Key not found. Please set GEMINI_API_KEY in GitHub Secrets or enter it in the app.");
     const ai = new GoogleGenAI({ apiKey });
 
     // 1. Strip HTML tags to get raw text for speaking
