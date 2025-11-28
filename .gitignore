@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Sensitive files with tokens
+final_push.bat
+push_to_github.bat
+log_debug.txt
+push_log.txt
+*.bat
