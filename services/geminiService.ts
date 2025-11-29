@@ -271,6 +271,16 @@ const getApiKey = (): string => {
     throw new Error("Invalid API key format. API key should start with 'AIza'");
   }
   
+  // Check if API key ends with ... (placeholder)
+  if (apiKey.endsWith('...')) {
+    throw new Error("API key appears to be a placeholder. Please replace '...' with your actual complete API key from https://aistudio.google.com/apikey");
+  }
+  
+  // Check minimum length (real API keys are usually 39+ characters)
+  if (apiKey.length < 30) {
+    throw new Error("API key seems too short. Please ensure you copied the complete API key from Google AI Studio.");
+  }
+  
   return apiKey;
 };
 
