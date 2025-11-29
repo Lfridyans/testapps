@@ -260,25 +260,32 @@ export const generateExecutiveAudio = async (htmlContent: string): Promise<strin
 // Helper to get API key with better error handling
 const getApiKey = (): string => {
   // Try multiple env var names
-  const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+  let apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY || '';
   
-  if (!apiKey || apiKey === 'YOUR_NEW_API_KEY_HERE' || apiKey.trim() === '') {
-    throw new Error("API Key not found or invalid. Please set GEMINI_API_KEY in .env.local file or GitHub Secrets.");
-  }
+  // Trim whitespace
+  apiKey = apiKey.trim();
   
-  // Basic validation - API key should start with AIza
-  if (!apiKey.startsWith('AIza')) {
-    throw new Error("Invalid API key format. API key should start with 'AIza'");
+  // Check for empty or placeholder values
+  if (!apiKey || 
+      apiKey === 'YOUR_NEW_API_KEY_HERE' || 
+      apiKey === 'AIzaSyABC123xyz789...' ||
+      apiKey === '') {
+    throw new Error("API Key not found or invalid. Please set GEMINI_API_KEY in .env.local file or GitHub Secrets. Get your API key from: https://aistudio.google.com/apikey");
   }
   
   // Check if API key ends with ... (placeholder)
   if (apiKey.endsWith('...')) {
-    throw new Error("API key appears to be a placeholder. Please replace '...' with your actual complete API key from https://aistudio.google.com/apikey");
+    throw new Error("API key appears to be a placeholder ending with '...'. Please replace with your actual complete API key from https://aistudio.google.com/apikey");
+  }
+  
+  // Basic validation - API key should start with AIza
+  if (!apiKey.startsWith('AIza')) {
+    throw new Error("Invalid API key format. API key should start with 'AIza'. Please check your API key from https://aistudio.google.com/apikey");
   }
   
   // Check minimum length (real API keys are usually 39+ characters)
   if (apiKey.length < 30) {
-    throw new Error("API key seems too short. Please ensure you copied the complete API key from Google AI Studio.");
+    throw new Error(`API key seems too short (${apiKey.length} characters). Please ensure you copied the complete API key from Google AI Studio. API keys are usually 39+ characters.`);
   }
   
   return apiKey;

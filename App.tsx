@@ -120,9 +120,16 @@ const App: React.FC = () => {
         scenario: selectedScenario
       });
       setResult(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Failed to get prediction.");
+      const errorMessage = err?.message || "Unknown error";
+      
+      // Show more helpful error message
+      if (errorMessage.includes("API key") || errorMessage.includes("API Key")) {
+        alert(`API Key Error: ${errorMessage}\n\nPlease update GEMINI_API_KEY in .env.local file with a valid API key from https://aistudio.google.com/apikey`);
+      } else {
+        alert(`Failed to get prediction: ${errorMessage}`);
+      }
     } finally {
       setLoading(false);
     }
