@@ -1,0 +1,66 @@
+Cleaning up old git... 
+Initializing new git... 
+Initialized empty Git repository in C:/Users/Lintar/Downloads/nataruTraffic/.git/
+warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'App.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/ChartSection.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/DashboardHeader.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/DatePicker.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/ExecutiveReport.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components/Layout.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'data/executiveData.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'data/nataruData.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'index.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'index.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'log_debug.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'metadata.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package-lock.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'push_log.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'services/geminiService.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tsconfig.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'types.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'vite.config.ts', LF will be replaced by CRLF the next time Git touches it
+Unstaging sensitive/temp files... 
+Committing... 
+[master (root-commit) f081600] Initial commit
+ Committer: Budi <Lintar@DESKTOP-9O8V5RO.corp.angkasapura2.co.id>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly:
+
+    git config --global user.name "Your Name"
+    git config --global user.email you@example.com
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 20 files changed, 6043 insertions(+)
+ create mode 100644 .gitignore
+ create mode 100644 App.tsx
+ create mode 100644 README.md
+ create mode 100644 components/ChartSection.tsx
+ create mode 100644 components/DashboardHeader.tsx
+ create mode 100644 components/DatePicker.tsx
+ create mode 100644 components/ExecutiveReport.tsx
+ create mode 100644 components/Layout.tsx
+ create mode 100644 data/executiveData.ts
+ create mode 100644 data/nataruData.ts
+ create mode 100644 final_log.txt
+ create mode 100644 index.html
+ create mode 100644 index.tsx
+ create mode 100644 metadata.json
+ create mode 100644 package-lock.json
+ create mode 100644 package.json
+ create mode 100644 services/geminiService.ts
+ create mode 100644 tsconfig.json
+ create mode 100644 types.ts
+ create mode 100644 vite.config.ts
+Adding remote... 
+Pushing... 
+branch 'main' set up to track 'origin/main'.
+To https://github.com/Lfridyans/testapps.git
+ * [new branch]      main -> main
+Done 

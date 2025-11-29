@@ -1,0 +1,49 @@
+Starting 
+git version 2.50.1.windows.1
+Reinitialized existing Git repository in C:/Users/Lintar/Downloads/nataruTraffic/.git/
+warning: in the working copy of 'log_debug.txt', LF will be replaced by CRLF the next time Git touches it
+[main 9cc1389] Initial commit
+ Committer: Budi <Lintar@DESKTOP-9O8V5RO.corp.angkasapura2.co.id>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly:
+
+    git config --global user.name "Your Name"
+    git config --global user.email you@example.com
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 3 files changed, 19 insertions(+), 1 deletion(-)
+ create mode 100644 final_log.txt
+ create mode 100644 final_push.bat
+remote: error: GH013: Repository rule violations found for refs/heads/main.        
+remote: 
+remote: - GITHUB PUSH PROTECTION        
+remote:   —————————————————————————————————————————        
+remote:     Resolve the following violations before pushing again        
+remote: 
+remote:     - Push cannot contain secrets        
+remote: 
+remote:             
+remote:      (?) Learn how to resolve a blocked push        
+remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push        
+remote:             
+remote:             
+remote:       —— GitHub Personal Access Token ——————————————————————        
+remote:        locations:        
+remote:          - commit: 9cc1389a2cdda6c1a65cf615f46487050108efcf        
+remote:            path: final_push.bat:14        
+remote:          - commit: e4f99db3b94161b24ec027ff15e2d6098b7f3f64        
+remote:            path: push_to_github.bat:10        
+remote:             
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.        
+remote:        https://github.com/Lfridyans/testapps/security/secret-scanning/unblock-secret/365b4p17InfkD12DBLMOyhE8psx        
+remote:             
+remote: 
+remote: 
+To https://github.com/Lfridyans/testapps.git
+ ! [remote rejected] main -> main (push declined due to repository rule violations)
+error: failed to push some refs to 'https://github.com/Lfridyans/testapps.git'
+Done 
