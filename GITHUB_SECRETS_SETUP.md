@@ -62,3 +62,5 @@ Coba jalankan prediksi. Jika tidak ada error "API Key not found", berarti berhas
 **Status**: ✅ API key sudah siap digunakan
 **File**: `.env.local` sudah dibuat untuk local development
 
+
+
