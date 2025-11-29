@@ -1,22 +1,26 @@
 # 🔐 Setup GitHub Secrets untuk Production
 
-## API Key yang Akan Digunakan
+## ⚠️ PENTING: API Key Baru Diperlukan
 
-```
-AIzaSyCPMXA5VvqQOTNXKhWeQdOc9xynA1h2K1g
-```
+**API key sebelumnya telah dilaporkan sebagai leaked dan tidak dapat digunakan lagi.**
+
+Anda perlu membuat API key baru dari Google AI Studio.
 
 ## 📋 Langkah Setup (PENTING!)
 
-### Step 1: Buka GitHub Secrets
-Buka link ini: **https://github.com/Lfridyans/testapps/settings/secrets/actions**
+### Step 1: Dapatkan API Key Baru
+1. Buka: **https://aistudio.google.com/apikey**
+2. Login dengan akun Google Anda
+3. Klik **"Create API Key"** atau **"Get API Key"**
+4. Copy API key yang baru dibuat (format: `AIzaSy...`)
 
-### Step 2: Tambahkan Secret Baru
-1. Klik tombol **"New repository secret"** (di kanan atas)
-2. Isi form:
+### Step 2: Setup GitHub Secrets
+1. Buka: **https://github.com/Lfridyans/testapps/settings/secrets/actions**
+2. Klik tombol **"New repository secret"** (di kanan atas)
+3. Isi form:
    - **Name**: `GEMINI_API_KEY` (HARUS tepat seperti ini!)
-   - **Secret**: `AIzaSyCPMXA5VvqQOTNXKhWeQdOc9xynA1h2K1g`
-3. Klik **"Add secret"**
+   - **Secret**: Paste API key baru Anda di sini
+4. Klik **"Add secret"**
 
 ### Step 3: Verifikasi
 Pastikan secret `GEMINI_API_KEY` muncul di daftar secrets.
