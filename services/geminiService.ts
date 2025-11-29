@@ -77,11 +77,7 @@ const parseAIResponse = (text: string) => {
 };
 
 export const getPrediction = async (request: PredictionRequest): Promise<PredictionResult> => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    throw new Error("API Key not found");
-  }
-
+  const apiKey = getApiKey();
   const ai = new GoogleGenAI({ apiKey });
   
   // 1. Get the correct dataset based on Airport Code
@@ -200,8 +196,7 @@ export const getPrediction = async (request: PredictionRequest): Promise<Predict
 };
 
 export const getExecutiveAnalysis = async (data: ExecutiveData): Promise<string> => {
-    const apiKey = process.env.API_KEY;
-    if (!apiKey) throw new Error("API Key not found");
+    const apiKey = getApiKey();
     const ai = new GoogleGenAI({ apiKey });
 
     const systemInstruction = `
@@ -233,8 +228,7 @@ export const getExecutiveAnalysis = async (data: ExecutiveData): Promise<string>
 }
 
 export const generateExecutiveAudio = async (htmlContent: string): Promise<string | undefined> => {
-    const apiKey = process.env.API_KEY;
-    if (!apiKey) throw new Error("API Key not found");
+    const apiKey = getApiKey();
     const ai = new GoogleGenAI({ apiKey });
 
     const rawText = htmlContent.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
@@ -263,9 +257,25 @@ export const generateExecutiveAudio = async (htmlContent: string): Promise<strin
 
 // === NEW FEATURE: AUTONOMOUS EVENT INTELLIGENCE ===
 
+// Helper to get API key with better error handling
+const getApiKey = (): string => {
+  // Try multiple env var names
+  const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+  
+  if (!apiKey || apiKey === 'YOUR_NEW_API_KEY_HERE' || apiKey.trim() === '') {
+    throw new Error("API Key not found or invalid. Please set GEMINI_API_KEY in .env.local file or GitHub Secrets.");
+  }
+  
+  // Basic validation - API key should start with AIza
+  if (!apiKey.startsWith('AIza')) {
+    throw new Error("Invalid API key format. API key should start with 'AIza'");
+  }
+  
+  return apiKey;
+};
+
 export const scanEventIntelligence = async (startDateInput?: string): Promise<EventIntelligence[]> => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) throw new Error("API Key not found");
+  const apiKey = getApiKey();
   const ai = new GoogleGenAI({ apiKey });
 
   // CALCULATE DATE RANGE (7 DAYS)
@@ -515,31 +525,30 @@ export const scanEventIntelligence = async (startDateInput?: string): Promise<Ev
 export const generateEventSummary = async (events: EventIntelligence[]): Promise<string> => {
     if (events.length === 0) return "<p>No significant events detected in this period.</p>";
 
-    const apiKey = process.env.API_KEY;
-    if (!apiKey) return "";
-    const ai = new GoogleGenAI({ apiKey });
-
-    const systemInstruction = `
-        Anda adalah "Chief Strategy Officer" Bandara. 
-        Buatlah "Strategic Intelligence Brief" singkat dalam format HTML (tanpa Markdown, gunakan <h4>, <p>, <ul>, <li>, <strong>) untuk sidebar dashboard.
-        
-        FOKUS:
-        1. Ringkasan Ancaman: Seberapa tinggi risiko operasional minggu ini?
-        2. Event Highlight: Sebutkan 1-2 event paling kritikal saja.
-        3. Rekomendasi Kunci: Satu kalimat rekomendasi strategis (Gunakan istilah: AOCC, AMC, AVSEC).
-        
-        Gunakan bahasa Indonesia yang profesional, padat, dan *action-oriented*.
-        Jangan terlalu panjang, maksimal 150 kata.
-    `;
-
-    const prompt = `
-        DATA EVENTS MINGGU INI:
-        ${JSON.stringify(events.map(e => ({ title: e.title, category: e.category, impact: e.impactLevel, location: e.location })))}
-        
-        Buat ringkasan sidebar HTML.
-    `;
-
     try {
+        const apiKey = getApiKey();
+        const ai = new GoogleGenAI({ apiKey });
+
+        const systemInstruction = `
+            Anda adalah "Chief Strategy Officer" Bandara. 
+            Buatlah "Strategic Intelligence Brief" singkat dalam format HTML (tanpa Markdown, gunakan <h4>, <p>, <ul>, <li>, <strong>) untuk sidebar dashboard.
+            
+            FOKUS:
+            1. Ringkasan Ancaman: Seberapa tinggi risiko operasional minggu ini?
+            2. Event Highlight: Sebutkan 1-2 event paling kritikal saja.
+            3. Rekomendasi Kunci: Satu kalimat rekomendasi strategis (Gunakan istilah: AOCC, AMC, AVSEC).
+            
+            Gunakan bahasa Indonesia yang profesional, padat, dan *action-oriented*.
+            Jangan terlalu panjang, maksimal 150 kata.
+        `;
+
+        const prompt = `
+            DATA EVENTS MINGGU INI:
+            ${JSON.stringify(events.map(e => ({ title: e.title, category: e.category, impact: e.impactLevel, location: e.location })))}
+            
+            Buat ringkasan sidebar HTML.
+        `;
+
         const response = await ai.models.generateContent({
             model: 'gemini-3-pro-preview',
             contents: prompt,
@@ -547,6 +556,7 @@ export const generateEventSummary = async (events: EventIntelligence[]): Promise
         });
         return response.text || "";
     } catch (e) {
+        console.error("Event Summary Error:", e);
         return "<p>Analysis unavailable.</p>";
     }
 }
