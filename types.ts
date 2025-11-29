@@ -4,9 +4,10 @@ export enum TrafficType {
   FLIGHT = 'FLIGHT',
 }
 
-export type AirportCode = 'ALL' | 'CGK' | 'DPS';
+// Updated to allow generic string for the expanded airport list while keeping major ones suggested
+export type AirportCode = 'ALL' | 'CGK' | 'DPS' | 'KNO' | 'SUB' | 'UPG' | 'BPN' | 'YIA' | 'DJJ' | string;
 
-export type Page = 'PREDICTOR' | 'EXECUTIVE';
+export type Page = 'PREDICTOR' | 'EXECUTIVE' | 'EVENT';
 
 export interface DailyData {
   date: string; // YYYY-MM-DD
@@ -23,15 +24,50 @@ export interface PredictionRequest {
   date: string;
   type: TrafficType;
   airportCode: AirportCode;
+  scenario?: string; // "AUTO" | "Normal" | "Cuaca..."
+}
+
+export interface GroundingSource {
+  title: string;
+  uri: string;
 }
 
 export interface PredictionResult {
   predictedValue: number;
   confidence: string;
   reasoning: string;
-  comprehensiveAnalysis: string; // New field for macro analysis
+  comprehensiveAnalysis: string;
   context: DailyData | null;
   airportCode: AirportCode;
+  sources?: GroundingSource[];
+  appliedScenario?: string; // The scenario finally applied
+  detectedEvent?: string; // New: What the agent autonomously found (e.g., "Heavy Rain Warning")
+}
+
+// --- Event Intelligence Types ---
+
+export type ImpactLevel = 'HIGH' | 'MEDIUM' | 'LOW';
+
+export interface OperationalMitigation {
+  action: string; // e.g., "Open Overflow Parking"
+  department: string; // e.g., "Security & Landside"
+}
+
+export interface EventIntelligence {
+  id: string;
+  title: string;
+  date: string;
+  location: string;
+  // Added 'Disaster' category
+  category: 'Concert' | 'Weather' | 'Disaster' | 'Holiday' | 'VVIP' | 'Other' | 'Logistics' | 'Micro';
+  impactLevel: ImpactLevel;
+  description: string;
+  weatherForecast: string; // e.g. "Heavy Rain, 28°C"
+  affectedAirport: AirportCode;
+  potentialOrigins?: AirportCode[]; // New: For map animation
+  mitigationPlan: OperationalMitigation[];
+  sourceUrl?: string;
+  imageUrl?: string; // New: Image for Tooltip/Card
 }
 
 // --- Executive Report Types ---

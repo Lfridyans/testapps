@@ -1,14 +1,17 @@
+
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import Layout from './components/Layout';
 import DashboardHeader from './components/DashboardHeader';
 import ChartSection from './components/ChartSection';
-import ExecutiveReport from './components/ExecutiveReport'; // New Component
+import ExecutiveReport from './components/ExecutiveReport';
+import EventDashboard from './components/EventDashboard'; // New Component
 import DatePicker from './components/DatePicker';
-import { TrafficType, PredictionResult, AirportCode, Page } from './types'; // Page type
-import { getPrediction, getExecutiveAnalysis, generateExecutiveAudio } from './services/geminiService';
+import SidebarNewsAnalysis from './components/SidebarNewsAnalysis'; // New Component
+import { TrafficType, PredictionResult, AirportCode, Page, EventIntelligence } from './types'; 
+import { getPrediction, getExecutiveAnalysis, generateExecutiveAudio, generateEventSummary } from './services/geminiService';
 import { getAirportData, getAirportStats } from './data/nataruData';
 import { EXECUTIVE_DATA } from './data/executiveData';
-import { Loader2, Search, Plane, Users, Building2, ChevronDown, LayoutDashboard, LineChart, Sparkles, RefreshCw, FileText, Volume2, StopCircle } from 'lucide-react';
+import { Loader2, Search, Plane, Users, Building2, ChevronDown, LayoutDashboard, LineChart, Sparkles, RefreshCw, FileText, Volume2, StopCircle, Zap, Bot, Menu, CalendarRange } from 'lucide-react';
 
 // --- Audio Helper Functions (From Google GenAI Guidelines) ---
 function decode(base64: string) {
@@ -42,11 +45,13 @@ async function decodeAudioData(
 
 const App: React.FC = () => {
   const [activePage, setActivePage] = useState<Page>('PREDICTOR'); // Navigation State
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Mobile Menu Toggle
 
   // Predictor State
   const [selectedDate, setSelectedDate] = useState<string>('2025-12-20');
   const [trafficType, setTrafficType] = useState<TrafficType>(TrafficType.PASSENGER);
   const [selectedAirport, setSelectedAirport] = useState<AirportCode>('ALL');
+  const [selectedScenario, setSelectedScenario] = useState<string>('AUTO'); // DEFAULT TO AUTO AGENT
   const [loading, setLoading] = useState<boolean>(false);
   const [result, setResult] = useState<PredictionResult | null>(null);
 
@@ -54,34 +59,15 @@ const App: React.FC = () => {
   const [execReport, setExecReport] = useState<string | null>(null);
   const [execLoading, setExecLoading] = useState<boolean>(false);
 
+  // Event Intelligence State (Shared for Sidebar)
+  const [eventAnalysis, setEventAnalysis] = useState<string | null>(null);
+  const [isEventAnalysisLoading, setIsEventAnalysisLoading] = useState<boolean>(false);
+
   // Audio State
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isAudioLoading, setIsAudioLoading] = useState<boolean>(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
-
-  // API Key State - Auto-initialize from localStorage or set default
-  const [apiKey, setApiKey] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('GEMINI_API_KEY');
-      if (stored) {
-        return stored;
-      }
-      // Auto-set default API key if not found
-      const defaultKey = 'AIzaSyCPMXA5VvqQOTNXKhWeQdOc9xynA1h2K1g';
-      localStorage.setItem('GEMINI_API_KEY', defaultKey);
-      return defaultKey;
-    }
-    return '';
-  });
-  const [showApiKeyInput, setShowApiKeyInput] = useState<boolean>(false);
-
-  // Auto-hide modal if API key is already set
-  useEffect(() => {
-    if (apiKey && typeof window !== 'undefined' && localStorage.getItem('GEMINI_API_KEY')) {
-      setShowApiKeyInput(false);
-    }
-  }, [apiKey]);
 
   // Dynamic Data Handling for Predictor
   const currentData = useMemo(() => getAirportData(selectedAirport), [selectedAirport]);
@@ -110,6 +96,11 @@ const App: React.FC = () => {
     setResult(null); 
   };
 
+  const handleScenarioChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedScenario(e.target.value);
+    // Don't clear result immediately to allow comparison
+  };
+
   const handleDateChange = (newDate: string) => {
     setSelectedDate(newDate);
     setResult(null);
@@ -117,43 +108,42 @@ const App: React.FC = () => {
 
   const handlePredict = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // API key should already be set via auto-initialization, but double-check
-    if (typeof window !== 'undefined' && !localStorage.getItem('GEMINI_API_KEY')) {
-      const defaultKey = 'AIzaSyCPMXA5VvqQOTNXKhWeQdOc9xynA1h2K1g';
-      localStorage.setItem('GEMINI_API_KEY', defaultKey);
-      setApiKey(defaultKey);
-    }
-    
     setLoading(true);
+    // On mobile, close menu after predicting to show results
+    setIsMobileMenuOpen(false);
+    
     try {
       const data = await getPrediction({
         date: selectedDate,
         type: trafficType,
-        airportCode: selectedAirport
+        airportCode: selectedAirport,
+        scenario: selectedScenario
       });
       setResult(data);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      if (err.message && err.message.includes('API Key not found')) {
-        setShowApiKeyInput(true);
-      } else {
-        alert("Failed to get prediction: " + (err.message || "Unknown error"));
-      }
+      alert("Failed to get prediction.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleApiKeySubmit = () => {
-    if (apiKey && typeof window !== 'undefined') {
-      localStorage.setItem('GEMINI_API_KEY', apiKey);
-      setShowApiKeyInput(false);
-      // Retry prediction if user was trying to predict
-      if (selectedDate) {
-        handlePredict(new Event('submit') as any);
+  // Callback from EventDashboard when events are loaded
+  const handleEventsLoaded = async (events: EventIntelligence[], isLoading: boolean) => {
+      setIsEventAnalysisLoading(true);
+      if (isLoading) {
+          // Keep loading state true, maybe clear old analysis
+          return;
       }
-    }
+      
+      try {
+          const summary = await generateEventSummary(events);
+          setEventAnalysis(summary);
+      } catch (e) {
+          console.error("Failed to generate sidebar summary", e);
+      } finally {
+          setIsEventAnalysisLoading(false);
+      }
   };
 
   // Helper to init/resume audio context
@@ -196,13 +186,6 @@ const App: React.FC = () => {
   };
 
   const handleGenExecReport = async () => {
-    // API key should already be set via auto-initialization, but double-check
-    if (typeof window !== 'undefined' && !localStorage.getItem('GEMINI_API_KEY')) {
-      const defaultKey = 'AIzaSyCPMXA5VvqQOTNXKhWeQdOc9xynA1h2K1g';
-      localStorage.setItem('GEMINI_API_KEY', defaultKey);
-      setApiKey(defaultKey);
-    }
-
     // 1. Capture user interaction immediately to unlock AudioContext
     try {
         await getAudioContext();
@@ -221,13 +204,9 @@ const App: React.FC = () => {
         if (text) {
             await playAudio(text);
         }
-    } catch (e: any) {
+    } catch (e) {
         console.error(e);
-        if (e.message && e.message.includes('API Key not found')) {
-          setShowApiKeyInput(true);
-        } else {
-          alert("Gagal generate report: " + (e.message || "Unknown error"));
-        }
+        alert("Gagal generate report");
     } finally {
         setExecLoading(false);
     }
@@ -246,19 +225,52 @@ const App: React.FC = () => {
     }
   };
 
+  const getPageTitle = () => {
+      switch(activePage) {
+          case 'PREDICTOR': return 'Traffic Prediction';
+          case 'EXECUTIVE': return 'Executive Dashboard';
+          case 'EVENT': return 'Event Intelligence';
+          default: return '';
+      }
+  };
+
   return (
     <Layout>
-      <div className="flex h-full w-full">
-        
+        {/* MOBILE TOGGLE BAR */}
+        <div className="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center z-30 sticky top-0 shadow-sm h-16">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                {getPageTitle()}
+            </span>
+            <button 
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className={`p-2 rounded text-slate-700 hover:bg-slate-200 transition-colors ${isMobileMenuOpen ? 'bg-slate-200' : 'bg-slate-100'}`}
+            >
+                <Menu className="w-5 h-5" />
+            </button>
+        </div>
+
         {/* SIDEBAR (Navigation & Control Panel) */}
-        <aside className="w-80 flex-none bg-white border-r border-slate-200 flex flex-col h-full overflow-hidden z-20 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+        {/* 
+           FIX FOR MOBILE SCROLLING:
+           1. Use fixed positioning with explicit top/bottom to handle viewport height correctly.
+           2. h-[calc(100dvh-4rem)] ensures it fits perfectly between header and screen bottom.
+           3. z-40 ensures it sits above other content.
+        */}
+        <aside className={`
+            bg-white border-r border-slate-200 flex flex-col z-40 shadow-2xl md:shadow-[4px_0_24px_rgba(0,0,0,0.02)]
+            fixed md:static w-full md:w-80 
+            top-16 bottom-0 md:top-auto md:bottom-auto md:h-full
+            supports-[height:100dvh]:h-[calc(100dvh-4rem)] h-[calc(100vh-4rem)] md:h-auto
+            transition-transform duration-300 ease-in-out
+            ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}>
             
-            {/* Main Navigation Menu */}
-            <div className="p-4 border-b border-slate-100 flex-none">
+            {/* Main Navigation Menu (PRIORITIZED) */}
+            <div className="p-4 border-b border-slate-100 flex-none bg-white z-10">
                <nav className="space-y-1">
                   <button 
-                    onClick={() => setActivePage('PREDICTOR')}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                    onClick={() => { setActivePage('PREDICTOR'); setIsMobileMenuOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-bold transition-all ${
                         activePage === 'PREDICTOR' 
                         ? 'bg-indigo-50 text-indigo-700' 
                         : 'text-slate-600 hover:bg-slate-50'
@@ -268,8 +280,8 @@ const App: React.FC = () => {
                      Analisis Prediksi
                   </button>
                   <button 
-                    onClick={() => setActivePage('EXECUTIVE')}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                    onClick={() => { setActivePage('EXECUTIVE'); setIsMobileMenuOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-bold transition-all ${
                         activePage === 'EXECUTIVE' 
                         ? 'bg-indigo-50 text-indigo-700' 
                         : 'text-slate-600 hover:bg-slate-50'
@@ -278,14 +290,38 @@ const App: React.FC = () => {
                      <LayoutDashboard className="w-4 h-4" />
                      Executive Report
                   </button>
+                  <button 
+                    onClick={() => { setActivePage('EVENT'); setIsMobileMenuOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-bold transition-all ${
+                        activePage === 'EVENT' 
+                        ? 'bg-indigo-50 text-indigo-700' 
+                        : 'text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                     <CalendarRange className="w-4 h-4" />
+                     Event Intelligence
+                  </button>
                </nav>
             </div>
+            
+            {/* NEW: SIDEBAR NEWS ANALYSIS (Only on Event Page) */}
+            {activePage === 'EVENT' && (
+                <div className="flex-1 flex flex-col min-h-0 overflow-y-auto scroll-smooth">
+                    <SidebarNewsAnalysis 
+                        analysis={eventAnalysis} 
+                        isLoading={isEventAnalysisLoading} 
+                    />
+                </div>
+            )}
 
             {/* Render Controls ONLY if on Predictor Page */}
             {activePage === 'PREDICTOR' && (
-                <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
-                    <div className="p-6">
-                        <h2 className="font-bold text-xs text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <div className="flex-1 flex flex-col min-h-0 overflow-y-auto scroll-smooth">
+                    {/* Visual Separator for Mobile */}
+                    <div className="h-2 bg-slate-50 border-b border-slate-100 flex-none md:hidden"></div>
+                    
+                    <div className="p-6 pb-40 md:pb-6"> {/* Increased bottom padding for mobile scroll safety */}
+                        <h2 className="font-bold text-xs text-slate-400 uppercase tracking-wider mb-5 flex items-center gap-2 mt-1">
                         <Search className="w-3 h-3" />
                         Parameter Prediksi
                         </h2>
@@ -298,7 +334,7 @@ const App: React.FC = () => {
                             <select
                                 value={selectedAirport}
                                 onChange={handleAirportChange}
-                                className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-700 py-2.5 px-3 pr-8 rounded-lg text-sm leading-tight focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-medium"
+                                className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-700 py-3 px-3 pr-8 rounded-lg text-sm leading-tight focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-medium"
                             >
                                 <option value="ALL">Seluruh Bandara</option>
                                 <option value="CGK">Soekarno-Hatta (CGK)</option>
@@ -354,24 +390,61 @@ const App: React.FC = () => {
                             />
                         </div>
 
+                        {/* AGENTIC FEATURE: SCENARIO SIMULATION */}
+                        <div className="pt-2 border-t border-dashed border-slate-200">
+                            <label className="flex items-center gap-1 text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">
+                                <Bot className="w-3 h-3" />
+                                Agent Mode (Autonomous)
+                            </label>
+                            <div className="relative">
+                                <select
+                                    value={selectedScenario}
+                                    onChange={handleScenarioChange}
+                                    className={`w-full appearance-none border text-sm py-3 px-3 pr-8 rounded-lg leading-tight focus:outline-none transition-all font-medium ${
+                                        selectedScenario === 'AUTO' 
+                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-800 focus:ring-emerald-500' 
+                                        : 'bg-indigo-50 border-indigo-200 text-indigo-800 focus:ring-indigo-500'
+                                    }`}
+                                >
+                                    <option value="AUTO">✨ Auto-Detect (Agent)</option>
+                                    <option value="Normal">Manual: Normal (Baseline)</option>
+                                    <option value="Cuaca Ekstrim / Bencana">Manual: Cuaca Ekstrim</option>
+                                    <option value="Lonjakan Tiba-tiba / Event Besar">Manual: Lonjakan Event</option>
+                                    <option value="Promo Tiket Murah">Manual: Promo Tiket</option>
+                                </select>
+                                <div className={`pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 ${selectedScenario === 'AUTO' ? 'text-emerald-500' : 'text-indigo-500'}`}>
+                                    <ChevronDown className="w-3.5 h-3.5" />
+                                </div>
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-1.5 leading-tight">
+                                {selectedScenario === 'AUTO' 
+                                    ? "Agent akan mencari berita/cuaca secara otonom dan menentukan skenario terbaik." 
+                                    : "Agent akan dipaksa mengikuti skenario manual yang Anda pilih."}
+                            </p>
+                        </div>
+
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-4"
+                            className={`w-full flex justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-6 ${
+                                selectedScenario === 'AUTO' 
+                                    ? 'bg-emerald-600 hover:bg-emerald-700' 
+                                    : (selectedScenario !== 'Normal' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-slate-800 hover:bg-slate-900')
+                            }`}
                         >
                             {loading ? (
                             <>
                                 <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
-                                Proses...
+                                {selectedScenario === 'AUTO' ? 'Agent Scanning...' : 'Processing...'}
                             </>
                             ) : (
-                            'Jalankan Prediksi'
+                                selectedScenario === 'AUTO' ? 'Jalankan Auto-Agent' : (selectedScenario !== 'Normal' ? 'Simulasikan' : 'Jalankan Prediksi')
                             )}
                         </button>
                         </form>
                     </div>
 
-                    <div className="mt-auto p-6 bg-slate-50 border-t border-slate-200">
+                    <div className="mt-auto p-6 bg-slate-50 border-t border-slate-200 hidden md:block">
                         <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Informasi Penting</h4>
                         <ul className="space-y-2 text-xs text-slate-600 font-medium">
                             <li className="flex gap-2 items-center">
@@ -393,7 +466,7 @@ const App: React.FC = () => {
 
             {/* Render AI Analysis ONLY if on Executive Page */}
             {activePage === 'EXECUTIVE' && (
-                <div className="flex-1 flex flex-col min-h-0 bg-slate-50/50">
+                <div className="flex-1 flex flex-col min-h-0 bg-slate-50/50 pb-20 md:pb-0">
                     <div className="p-4 border-b border-slate-200 bg-white">
                         <h4 className="font-bold text-slate-700 text-xs flex items-center gap-2 mb-1">
                             <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
@@ -406,7 +479,7 @@ const App: React.FC = () => {
                     
                     <div className="flex-1 p-4 overflow-y-auto custom-scrollbar">
                          {!execReport ? (
-                            <div className="h-full flex flex-col items-center justify-center text-center opacity-60">
+                            <div className="h-full flex flex-col items-center justify-center text-center opacity-60 min-h-[200px]">
                                 <FileText className="w-10 h-10 text-slate-300 mb-2" />
                                 <p className="text-xs text-slate-500 mb-4 max-w-[200px]">
                                     Belum ada laporan. Klik tombol di bawah untuk generate.
@@ -467,16 +540,20 @@ const App: React.FC = () => {
         </aside>
 
         {/* MAIN CONTENT */}
-        <main className="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-hidden relative">
+        {/* CRITICAL FIX: overflow-y-auto enables scrolling on ALL devices (Desktop & Mobile) */}
+        {/* We removed md:overflow-hidden which was trapping content on desktop */}
+        <div className="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-y-auto relative w-full">
            
            {/* CONDITIONAL RENDERING BASED ON ACTIVE PAGE */}
            
            {activePage === 'PREDICTOR' && (
-             <>
+             <div className="flex flex-col h-auto min-h-full pb-32"> {/* pb-32 ensures bottom content is never cut off */}
                 {/* Predictor View */}
                 <DashboardHeader stats={currentStats} />
-                <div className="flex-1 min-h-0 p-4">
-                    <div className="h-full rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                <div className="p-4">
+                    {/* CRITICAL FIX: h-auto allows the card to grow as much as needed for analysis text */}
+                    {/* Removed fixed height constraints */}
+                    <div className="flex flex-col rounded-xl border border-slate-200 overflow-hidden shadow-sm bg-white h-auto">
                         <ChartSection 
                             trafficType={trafficType}
                             predictionResult={result}
@@ -485,60 +562,18 @@ const App: React.FC = () => {
                         />
                     </div>
                 </div>
-             </>
+             </div>
            )}
 
            {activePage === 'EXECUTIVE' && (
              <ExecutiveReport />
            )}
 
-        </main>
+           {activePage === 'EVENT' && (
+             <EventDashboard onEventsLoaded={handleEventsLoaded} />
+           )}
 
-      </div>
-
-      {/* API Key Input Modal - Only show if really needed */}
-      {showApiKeyInput && !apiKey && typeof window !== 'undefined' && !localStorage.getItem('GEMINI_API_KEY') && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-bold text-slate-800 mb-2">API Key Required</h3>
-            <p className="text-sm text-slate-600 mb-4">
-              Please enter your Gemini API Key to use AI features. Your key will be stored locally in your browser.
-            </p>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Enter your Gemini API Key"
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            <div className="flex gap-2">
-              <button
-                onClick={handleApiKeySubmit}
-                className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
-              >
-                Save & Continue
-              </button>
-              <button
-                onClick={() => {
-                  setShowApiKeyInput(false);
-                  if (typeof window !== 'undefined' && localStorage.getItem('GEMINI_API_KEY')) {
-                    setApiKey(localStorage.getItem('GEMINI_API_KEY') || '');
-                  }
-                }}
-                className="px-4 py-2 border border-slate-300 rounded-lg font-medium hover:bg-slate-50 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-            <p className="text-xs text-slate-500 mt-3">
-              Get your API key from{' '}
-              <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
-                Google AI Studio
-              </a>
-            </p>
-          </div>
         </div>
-      )}
     </Layout>
   );
 };

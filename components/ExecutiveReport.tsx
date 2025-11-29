@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { EXECUTIVE_DATA } from '../data/executiveData';
 import { 
@@ -85,7 +84,7 @@ const OpIndicator = ({ icon: Icon, title, data }: any) => (
 );
 
 const AccumulationCard = ({ icon: Icon, title, value, growth, recv, color }: any) => (
-    <div className="bg-white border border-slate-200 rounded p-3 flex flex-col items-center justify-center text-center shadow-sm h-full relative overflow-hidden">
+    <div className="bg-white border border-slate-200 rounded p-3 flex flex-col items-center justify-center text-center shadow-sm h-full relative overflow-hidden min-h-[80px]">
         <div className={`absolute top-0 left-0 w-1 h-full ${color}`}></div>
         <Icon className="w-6 h-6 text-slate-300 mb-1" />
         <div className="text-lg font-bold text-slate-800 leading-tight">{value} <span className="text-xs font-normal text-slate-500">{title}</span></div>
@@ -106,21 +105,21 @@ const ExecutiveReport: React.FC = () => {
     const d = EXECUTIVE_DATA;
 
     return (
-        <div className="h-full w-full bg-slate-100 p-2 overflow-hidden flex flex-col font-sans">
+        <div className="w-full bg-slate-100 p-2 flex flex-col font-sans pb-32 h-auto min-h-full md:h-full md:overflow-y-auto md:pb-0">
             {/* Header / Filter Bar */}
-            <div className="flex justify-between items-center mb-2 px-1 flex-none">
+            <div className="flex flex-col md:flex-row justify-between md:items-center mb-2 px-1 flex-none gap-2 md:gap-0">
                 <div className="flex items-center gap-2">
                    <div className="w-6 h-6 bg-gradient-to-br from-amber-400 to-orange-500 rounded flex items-center justify-center text-white font-bold text-xs">P</div>
                    <h1 className="font-bold text-slate-800 text-sm">Posko Nataru 2024 &gt; <span className="text-slate-500">Executive Report - Head Office</span></h1>
                 </div>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                      <div className="bg-white border border-slate-300 rounded flex items-center px-2 py-1 gap-2 text-xs text-slate-600">
                         <Calendar className="w-3 h-3" />
                         <span>18 Dec - 5 Jan</span>
                      </div>
                      <button className="bg-white border border-slate-300 text-slate-600 px-2 py-1 rounded text-xs font-medium hover:bg-slate-50 flex items-center gap-1">
-                        <Download className="w-3 h-3" /> Export PDF
+                        <Download className="w-3 h-3" /> <span className="hidden sm:inline">Export PDF</span>
                      </button>
                      <div className="text-[10px] text-right ml-2 text-slate-400 leading-tight">
                         Last Updated<br/>
@@ -130,17 +129,17 @@ const ExecutiveReport: React.FC = () => {
             </div>
 
             {/* Main Content Grid */}
-            <div className="flex-1 grid grid-cols-12 gap-2 min-h-0">
+            <div className="flex-1 grid grid-cols-12 gap-2">
                 
                 {/* TOP ROW: Highlights */}
-                <div className="col-span-12 md:col-span-6 h-[160px]">
+                <div className="col-span-12 md:col-span-6 h-auto md:h-[160px]">
                     <HighlightCard 
                         title="Traffic Tertinggi Sebelum Natal" 
                         badge="H-3" 
                         data={d.highlightBefore} 
                     />
                 </div>
-                <div className="col-span-12 md:col-span-6 h-[160px]">
+                <div className="col-span-12 md:col-span-6 h-auto md:h-[160px]">
                     <HighlightCard 
                         title="Traffic Tertinggi Setelah Tahun Baru" 
                         badge="H+5" 
@@ -149,7 +148,7 @@ const ExecutiveReport: React.FC = () => {
                 </div>
 
                 {/* MIDDLE ROW: Operational Indicators */}
-                <div className="col-span-12 h-16 grid grid-cols-4 gap-2">
+                <div className="col-span-12 h-auto md:h-16 grid grid-cols-2 md:grid-cols-4 gap-2">
                     <OpIndicator icon={Clock} title="On Time Performance" data={d.operational.otp} />
                     <OpIndicator icon={BarChart3} title="Load Factor" data={d.operational.loadFactor} />
                     <OpIndicator icon={RefreshCw} title="Slot Utilization" data={d.operational.slotUtilization} />
@@ -163,7 +162,7 @@ const ExecutiveReport: React.FC = () => {
                     <div className="bg-white p-1 border border-slate-200 rounded text-center text-xs font-bold text-slate-700 uppercase tracking-wider flex-none">
                         Traffic Accumulation
                     </div>
-                    <div className="flex-1 grid grid-rows-3 gap-2 min-h-0">
+                    <div className="flex-1 grid grid-rows-3 gap-2 min-h-[250px] md:min-h-0">
                         <AccumulationCard icon={Plane} title="Flight" value={d.accumulation.flight.total} growth={d.accumulation.flight.growth} recv={d.accumulation.flight.recovery} color="bg-blue-500" />
                         <AccumulationCard icon={Users} title="Pax" value={d.accumulation.pax.total} growth={d.accumulation.pax.growth} recv={d.accumulation.pax.recovery} color="bg-emerald-500" />
                         <AccumulationCard icon={Package} title="TON Cargo" value={d.accumulation.cargo.total} growth={d.accumulation.cargo.growth} recv={d.accumulation.cargo.recovery} color="bg-amber-500" />
@@ -171,8 +170,8 @@ const ExecutiveReport: React.FC = () => {
                 </div>
 
                 {/* COL 2: Top Traffic Lists (35%) */}
-                <div className="col-span-12 md:col-span-4 flex flex-col gap-2 min-h-0">
-                    <div className="bg-white rounded border border-slate-200 p-2 flex-1 shadow-sm overflow-hidden flex flex-col">
+                <div className="col-span-12 md:col-span-4 flex flex-col gap-2 min-h-[300px] md:min-h-0">
+                    <div className="bg-white rounded border border-slate-200 p-2 flex-1 shadow-sm overflow-hidden flex flex-col min-h-[120px]">
                         <h5 className="font-bold text-[10px] text-slate-600 uppercase mb-2 border-b border-slate-100 pb-1 flex-none">Top Traffic by Passengers</h5>
                         <div className="flex-1 overflow-auto">
                             <table className="w-full text-xs">
@@ -189,7 +188,7 @@ const ExecutiveReport: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex gap-2 flex-1 min-h-0">
-                        <div className="bg-white rounded border border-slate-200 p-2 flex-1 shadow-sm flex flex-col">
+                        <div className="bg-white rounded border border-slate-200 p-2 flex-1 shadow-sm flex flex-col min-h-[100px]">
                             <h5 className="font-bold text-[9px] text-slate-600 uppercase mb-2 border-b border-slate-100 pb-1 flex-none">Top Dest Intl</h5>
                             <div className="flex-1 overflow-auto">
                                 <table className="w-full text-[10px]">
@@ -205,7 +204,7 @@ const ExecutiveReport: React.FC = () => {
                                 </table>
                             </div>
                         </div>
-                        <div className="bg-white rounded border border-slate-200 p-2 flex-1 shadow-sm flex flex-col">
+                        <div className="bg-white rounded border border-slate-200 p-2 flex-1 shadow-sm flex flex-col min-h-[100px]">
                             <h5 className="font-bold text-[9px] text-slate-600 uppercase mb-2 border-b border-slate-100 pb-1 flex-none">Top Dest Dom</h5>
                             <div className="flex-1 overflow-auto">
                                 <table className="w-full text-[10px]">
@@ -225,7 +224,7 @@ const ExecutiveReport: React.FC = () => {
                 </div>
 
                 {/* COL 3: Extra Flight & Ops (35%) */}
-                <div className="col-span-12 md:col-span-4 flex flex-col gap-2 min-h-0">
+                <div className="col-span-12 md:col-span-4 flex flex-col gap-2 min-h-[300px] md:min-h-0">
                     {/* Extra Flight */}
                     <div className="bg-white rounded border border-slate-200 p-3 shadow-sm flex-none flex flex-col justify-center min-h-[80px]">
                         <div className="flex items-center gap-1 font-bold text-[10px] text-blue-600 uppercase mb-3">
@@ -285,7 +284,7 @@ const ExecutiveReport: React.FC = () => {
                     </div>
 
                     {/* Irregularities Table */}
-                    <div className="bg-white rounded border border-slate-200 p-2 shadow-sm flex-1 flex flex-col overflow-hidden">
+                    <div className="bg-white rounded border border-slate-200 p-2 shadow-sm flex-1 flex flex-col overflow-hidden min-h-[150px]">
                          <div className="flex items-center gap-2 font-bold text-[10px] text-slate-600 uppercase mb-2 flex-none px-1 pt-1">
                             <AlertCircle className="w-3 h-3 text-slate-500" /> Irregularities Condition
                         </div>

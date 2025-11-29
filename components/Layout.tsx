@@ -6,9 +6,9 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <div className="h-screen bg-slate-50 text-slate-900 font-sans flex flex-col overflow-hidden">
+    <div className="h-screen supports-[height:100dvh]:h-[100dvh] bg-slate-50 text-slate-900 font-sans flex flex-col overflow-hidden">
       {/* Navbar */}
-      <nav className="bg-white border-b border-slate-200 h-16 flex-none z-50">
+      <nav className="bg-white border-b border-slate-200 h-16 flex-none z-50 shadow-sm">
         <div className="w-full px-4 sm:px-6 lg:px-8 h-full">
           <div className="flex justify-between h-full items-center">
             <div className="flex items-center gap-3">
@@ -27,8 +27,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       </nav>
 
-      {/* Main Content - No Padding, Full Height */}
-      <main className="flex-1 overflow-hidden relative">
+      {/* Main Content Wrapper */}
+      {/* 
+          We keep overflow-hidden here to ensure the fixed sidebar works correctly. 
+          The scrolling happens inside the specific content div in App.tsx 
+      */}
+      <main className="flex-1 relative flex flex-col md:flex-row overflow-hidden">
         {children}
       </main>
     </div>
